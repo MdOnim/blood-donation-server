@@ -56,6 +56,10 @@ const getAllUsers = async (req, res) => {
 
 const blockUser = async (req, res) => {
   try {
+    if (req.params.id === req.decoded.userId) {
+      return res.status(400).send({ message: 'You cannot block your own account' });
+    }
+
     const user = await User.findByIdAndUpdate(
       req.params.id,
       { status: 'blocked' },
@@ -93,6 +97,29 @@ const makeVolunteer = async (req, res) => {
   }
 };
 
+const removeVolunteer = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).send({ message: 'User not found' });
+    }
+
+    if (user.role !== 'volunteer') {
+      return res.status(400).send({ message: 'User is not a volunteer' });
+    }
+
+    const updated = await User.findByIdAndUpdate(
+      req.params.id,
+      { role: 'donor' },
+      { new: true }
+    ).select('-password');
+
+    res.send(updated);
+  } catch (error) {
+    res.status(500).send({ message: error.message });
+  }
+};
+
 const makeAdmin = async (req, res) => {
   try {
     const user = await User.findByIdAndUpdate(
@@ -113,5 +140,6 @@ module.exports = {
   blockUser,
   unblockUser,
   makeVolunteer,
+  removeVolunteer,
   makeAdmin,
 };

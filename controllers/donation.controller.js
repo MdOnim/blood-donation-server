@@ -181,6 +181,12 @@ const donateBlood = async (req, res) => {
       return res.status(404).send({ message: 'Donation request not found' });
     }
 
+    if (request.requesterId.toString() === req.decoded.userId) {
+      return res
+        .status(400)
+        .send({ message: 'You cannot donate to your own request' });
+    }
+
     if (request.donationStatus !== 'pending') {
       return res
         .status(400)
