@@ -42,7 +42,7 @@ const login = async (req, res) => {
     }
 
     if (user.status === 'blocked') {
-      return res.status(403).send({ message: 'Your account has been blocked' });
+      return res.status(403).send({ message: 'User account restricted.' });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);

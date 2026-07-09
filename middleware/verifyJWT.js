@@ -1,19 +1,38 @@
 const jwt = require('jsonwebtoken');
+const User = require('../models/User');
 
-const verifyJWT = (req, res, next) => {
+const verifyJWT = async (req, res, next) => {
   const authHeader = req.headers.authorization;
   if (!authHeader) {
     return res.status(401).send({ message: 'Unauthorized access' });
   }
 
   const token = authHeader.split(' ')[1];
-  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
-    if (err) {
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.userId).select('status role email');
+
+    if (!user) {
       return res.status(401).send({ message: 'Unauthorized access' });
     }
-    req.decoded = decoded;
+
+    if (user.status === 'blocked') {
+      return res.status(403).send({
+        message: 'User account restricted.',
+        code: 'ACCOUNT_RESTRICTED',
+      });
+    }
+
+    req.decoded = {
+      ...decoded,
+      role: user.role,
+      status: user.status,
+    };
     next();
-  });
+  } catch (err) {
+    return res.status(401).send({ message: 'Unauthorized access' });
+  }
 };
 
 const verifyAdmin = (req, res, next) => {

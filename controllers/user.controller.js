@@ -133,6 +133,35 @@ const makeAdmin = async (req, res) => {
   }
 };
 
+const removeAdmin = async (req, res) => {
+  try {
+    if (req.params.id === req.decoded.userId) {
+      return res
+        .status(400)
+        .send({ message: 'You cannot remove yourself from admin' });
+    }
+
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).send({ message: 'User not found' });
+    }
+
+    if (user.role !== 'admin') {
+      return res.status(400).send({ message: 'User is not an admin' });
+    }
+
+    const updated = await User.findByIdAndUpdate(
+      req.params.id,
+      { role: 'volunteer' },
+      { new: true }
+    ).select('-password');
+
+    res.send(updated);
+  } catch (error) {
+    res.status(500).send({ message: error.message });
+  }
+};
+
 module.exports = {
   getProfile,
   updateProfile,
@@ -142,4 +171,5 @@ module.exports = {
   makeVolunteer,
   removeVolunteer,
   makeAdmin,
+  removeAdmin,
 };

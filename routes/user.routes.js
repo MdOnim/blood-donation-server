@@ -8,6 +8,7 @@ const {
   makeVolunteer,
   removeVolunteer,
   makeAdmin,
+  removeAdmin,
 } = require('../controllers/user.controller');
 const {
   verifyJWT,
@@ -24,5 +25,6 @@ router.patch('/unblock/:id', verifyJWT, verifyAdmin, unblockUser);
 router.patch('/make-volunteer/:id', verifyJWT, verifyAdmin, makeVolunteer);
 router.patch('/remove-volunteer/:id', verifyJWT, verifyAdmin, removeVolunteer);
 router.patch('/make-admin/:id', verifyJWT, verifyAdmin, makeAdmin);
+router.patch('/remove-admin/:id', verifyJWT, verifyAdmin, removeAdmin);
 
 module.exports = router;
