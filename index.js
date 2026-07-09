@@ -29,11 +29,7 @@ const isAllowedOrigin = (origin) => {
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (isAllowedOrigin(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
+      callback(null, isAllowedOrigin(origin));
     },
     credentials: true,
   })
@@ -41,17 +37,47 @@ app.use(
 
 app.use(express.json({ limit: '10mb' }));
 
+app.get('/', (req, res) => {
+  res.send('Blood Donation API is running');
+});
+
+let cached = global.mongoose;
+
+if (!cached) {
+  cached = global.mongoose = { conn: null, promise: null };
+}
+
 const connectDB = async () => {
-  if (mongoose.connection.readyState >= 1) {
-    return mongoose.connection;
+  if (!process.env.MONGODB_URI) {
+    throw new Error('MONGODB_URI is not set');
   }
 
-  await mongoose.connect(process.env.MONGODB_URI);
-  console.log('Connected to MongoDB');
-  return mongoose.connection;
+  if (cached.conn) {
+    return cached.conn;
+  }
+
+  if (!cached.promise) {
+    cached.promise = mongoose
+      .connect(process.env.MONGODB_URI, {
+        bufferCommands: false,
+        maxPoolSize: 1,
+        serverSelectionTimeoutMS: 10000,
+      })
+      .then((connection) => {
+        console.log('Connected to MongoDB');
+        return connection;
+      });
+  }
+
+  cached.conn = await cached.promise;
+  return cached.conn;
 };
 
 app.use(async (req, res, next) => {
+  if (req.path === '/') {
+    return next();
+  }
+
   try {
     await connectDB();
     next();
@@ -61,10 +87,6 @@ app.use(async (req, res, next) => {
   }
 });
 
-app.get('/', (req, res) => {
-  res.send('Blood Donation API is running');
-});
-
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/donations', donationRoutes);
@@ -72,6 +94,11 @@ app.use('/api/funding', fundingRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api/locations', locationRoutes);
 app.use('/api/stats', statsRoutes);
+
+app.use((err, req, res, next) => {
+  console.error(err);
+  res.status(500).json({ message: err.message || 'Server error' });
+});
 
 const PORT = process.env.PORT || 5000;
 

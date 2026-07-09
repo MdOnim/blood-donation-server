@@ -1,6 +1,11 @@
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const Stripe = require('stripe');
 const Funding = require('../models/Funding');
 const User = require('../models/User');
+
+const getStripe = () => {
+  if (!process.env.STRIPE_SECRET_KEY) return null;
+  return new Stripe(process.env.STRIPE_SECRET_KEY);
+};
 
 const isStripeConfigured = () =>
   Boolean(process.env.STRIPE_SECRET_KEY) &&
@@ -36,6 +41,7 @@ const createCheckoutSession = async (req, res) => {
     }
 
     const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+    const stripe = getStripe();
 
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
@@ -81,6 +87,7 @@ const confirmFunding = async (req, res) => {
     let ownerUserId;
 
     if (sessionId) {
+      const stripe = getStripe();
       const session = await stripe.checkout.sessions.retrieve(sessionId);
 
       if (session.payment_status !== 'paid') {
@@ -105,6 +112,7 @@ const confirmFunding = async (req, res) => {
       amount = session.amount_total / 100;
       ownerUserId = session.metadata.userId;
     } else {
+      const stripe = getStripe();
       const paymentIntent = await stripe.paymentIntents.retrieve(stripePaymentId);
 
       if (paymentIntent.status !== 'succeeded') {
@@ -182,6 +190,7 @@ const getFundingById = async (req, res) => {
 
     if (funding.stripePaymentId && isStripeConfigured()) {
       try {
+        const stripe = getStripe();
         const paymentIntent = await stripe.paymentIntents.retrieve(funding.stripePaymentId);
         paymentStatus = paymentIntent.status;
       } catch {
