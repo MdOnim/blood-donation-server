@@ -4,26 +4,25 @@ REST API backend for the LifeLink Blood Donation Platform built with Node.js, Ex
 
 ## Deployment
 
-See the client README deployment section for the full Vercel + Render flow.
+Deploy on [Vercel](https://vercel.com). See the client README for the full step-by-step guide.
 
-Quick server env on Render:
+Quick server env on Vercel:
 
 ```
-PORT=10000
 MONGODB_URI=your_mongodb_atlas_uri
 JWT_SECRET=your_long_random_secret
 STRIPE_SECRET_KEY=sk_test_your_key
-CLIENT_URL=https://your-vercel-app.vercel.app
+CLIENT_URL=https://your-client-app.vercel.app
 ```
 
-After first deploy, run in Render Shell:
+After first deploy, seed admin from your computer (with production `MONGODB_URI` in `.env`):
 
 ```bash
 npm run seed:admin
 ```
 
 ## Live URL
-`https://your-server-url.onrender.com` *(add after Render/Railway deployment)*
+`https://your-server-app.vercel.app` *(add after Vercel deployment)*
 
 ## Purpose
 Provides secure APIs for user authentication, donation request management, request search, funding via Stripe, and admin operations with JWT-based role access control.
