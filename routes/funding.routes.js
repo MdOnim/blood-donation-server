@@ -1,17 +1,19 @@
 const express = require('express');
 const {
-  createPaymentIntent,
+  createCheckoutSession,
   confirmFunding,
   getAllFunding,
   getTotalFunding,
+  getFundingById,
 } = require('../controllers/funding.controller');
-const { verifyJWT } = require('../middleware/verifyJWT');
+const { verifyJWT, verifyAdmin } = require('../middleware/verifyJWT');
 
 const router = express.Router();
 
-router.post('/create-payment-intent', verifyJWT, createPaymentIntent);
+router.post('/create-checkout-session', verifyJWT, createCheckoutSession);
 router.post('/confirm', verifyJWT, confirmFunding);
 router.get('/', verifyJWT, getAllFunding);
 router.get('/total', verifyJWT, getTotalFunding);
+router.get('/:id', verifyJWT, verifyAdmin, getFundingById);
 
 module.exports = router;

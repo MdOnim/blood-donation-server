@@ -125,6 +125,12 @@ const updateDonationRequest = async (req, res) => {
       return res.status(403).send({ message: 'Forbidden' });
     }
 
+    if (['done', 'canceled'].includes(request.donationStatus)) {
+      return res.status(400).send({
+        message: 'Done or canceled requests cannot be edited',
+      });
+    }
+
     const updated = await DonationRequest.findByIdAndUpdate(
       req.params.id,
       req.body,

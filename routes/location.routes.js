@@ -12,7 +12,7 @@ router.get('/divisions', (req, res) => {
 router.get('/districts', (req, res) => {
   const { division } = req.query;
   if (division) {
-    const filtered = districts.filter((d) => d.division_id === division);
+    const filtered = districts.filter((d) => String(d.division_id) === String(division));
     return res.send(filtered);
   }
   res.send(districts);

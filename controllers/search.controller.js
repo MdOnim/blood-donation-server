@@ -3,29 +3,36 @@ const DonationRequest = require('../models/DonationRequest');
 const Funding = require('../models/Funding');
 const districts = require('../data/districts');
 
+const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 const searchDonors = async (req, res) => {
   try {
     const { bloodGroup, division, district, upazila } = req.query;
 
     const filter = {
-      role: 'donor',
-      status: 'active',
+      donationStatus: { $in: ['pending', 'inprogress'] },
     };
 
     if (bloodGroup) filter.bloodGroup = bloodGroup;
-    if (upazila) filter.upazila = upazila;
+    if (upazila) filter.recipientUpazila = new RegExp(`^${escapeRegex(upazila)}$`, 'i');
 
     if (district) {
-      filter.district = district;
+      filter.recipientDistrict = new RegExp(`^${escapeRegex(district)}$`, 'i');
     } else if (division) {
       const districtNames = districts
-        .filter((d) => d.division_id === division)
+        .filter((d) => String(d.division_id) === String(division))
         .map((d) => d.name);
-      filter.district = { $in: districtNames };
+
+      if (districtNames.length > 0) {
+        filter.recipientDistrict = { $in: districtNames };
+      }
     }
 
-    const donors = await User.find(filter).select('-password');
-    res.send(donors);
+    const requests = await DonationRequest.find(filter)
+      .sort({ createdAt: -1 })
+      .select('-donorEmail -requesterEmail');
+
+    res.send(requests);
   } catch (error) {
     res.status(500).send({ message: error.message });
   }
