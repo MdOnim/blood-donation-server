@@ -41,6 +41,8 @@ app.get('/', (req, res) => {
   res.send('Blood Donation API is running');
 });
 
+app.use('/api/locations', locationRoutes);
+
 let cached = global.mongoose;
 
 if (!cached) {
@@ -73,6 +75,22 @@ const connectDB = async () => {
   return cached.conn;
 };
 
+app.get('/api/health', async (req, res) => {
+  try {
+    if (!process.env.MONGODB_URI) {
+      return res.status(500).json({
+        ok: false,
+        error: 'MONGODB_URI is missing in Vercel environment variables',
+      });
+    }
+
+    await connectDB();
+    res.json({ ok: true, db: 'connected' });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
 app.use(async (req, res, next) => {
   if (req.path === '/') {
     return next();
@@ -92,7 +110,6 @@ app.use('/api/users', userRoutes);
 app.use('/api/donations', donationRoutes);
 app.use('/api/funding', fundingRoutes);
 app.use('/api/search', searchRoutes);
-app.use('/api/locations', locationRoutes);
 app.use('/api/stats', statsRoutes);
 
 app.use((err, req, res, next) => {
